@@ -4,13 +4,21 @@
     box-sizing: border-box;
 
 }
+table {
+    width: 100%;
+    max-width: 350px; /* En PC no pasará de este ancho */
+    border-spacing: 12px;
+    table-layout: fixed;
+    margin: auto;
+}
 
 body {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Ocupa al menos el alto de la pantalla */
     background-color: black;
+    padding: 20px;
 }
 
 /*::-webkit-input-placeholder {  se utiliza para poner el placeholder en blanco por defecto es gris, es un estandar viejo
@@ -28,46 +36,56 @@ body {
 }
 
 .inputStyle {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 60px;
+    padding: 20px 10px;
+    background: black;
+    color: white;
     border: none;
     text-align: right;
-    width: 250px;
-    height: 50px;
-    font-size: 50px;
-    color: white;
-    background-color: black;
-    font-weight: 100;
 }
 
 button {
-    border-radius: 80px;
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Esto define la altura de TODAS las filas */
+    border-radius: 50%;
     border: none;
-    margin: 2px;
-    font-size: 20px;
-    font-weight: 250;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+button:active{
+    opacity: 0.7;
+}
+
+td[colspan="2"] button {
+    aspect-ratio: 2; /* Permite que sea más ancho que alto */
+    height: 100%; 
+    border-radius: 100px; /* Radio grande para que parezca cápsula */
+    justify-content: space-around;
+    padding-left: 25px;
+}
+
+td{
+    width: 25%;
+    padding: 0;
+}
+
+
 
 .operador {
     background-color: #ff9500;
     color: white;
 }
 
-.operador1 {
-    background-color: gray;
-    color: black 900;
-}
+
 
 .num {
     background-color: #333;
     color: white;
     font-weight: 300;
-}
-
-.botonCero {
-    width: 100%;
-    background-color: #333;
-    color: white;
-    text-align: left;
-    padding-left: 25px;
 }
