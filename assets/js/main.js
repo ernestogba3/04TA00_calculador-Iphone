@@ -1,165 +1,283 @@
-// ─── ESTADO DE LA CALCULADORA ───────────────────────────────────────────────
-let primerNumero = '';
-let operadorActual = '';
-let esperandoSegundo = false;
-let operacionRealizada = false;
+class Calculadora {
+    constructor() {
+        this.expresion    = '';
+        this.resultado    = '0';
+        this.nuevaEntrada = true;
+        this.errorActivo  = false;
 
-// ─── ELEMENTOS DEL DOM ──────────────────────────────────────────────────────
-const pantalla = document.getElementById('texto');
-const botonesNum = document.querySelectorAll('.num');
-const botonIgual = document.getElementById('igual');
-const botonSumar = document.getElementById('sumar');
-const botonRestar = document.getElementById('restar');
-const botonMultiplicar = document.getElementById('multiplicar');
-const botonDividir = document.getElementById('dividir');
-const botonesGrisClaro = document.querySelectorAll('.grisClaro');
-const botonesOperadorExtra = document.querySelectorAll('.operador');
+        this.displayEl = document.getElementById('display');
+        this.exprEl    = document.getElementById('expression'); // línea superior del display
 
-// ─── FUNCIONES AUXILIARES ────────────────────────────────────────────────────
+        this._bindEventos();
+    }
 
-function actualizarPantalla(valor) {
-    pantalla.value = valor;
-}
+    /* ─────────────────────────────────────────────
+       BINDING DE EVENTOS
+       ─────────────────────────────────────────────
+       FIX #1: El selector era '.button' (no existe).
+               Ahora escuchamos en '.calculator', que
+               siempre existe y engloba todos los botones.
+       FIX #2: Ya no leemos textContent sino los atributos
+               data-num / data-op / data-action / data-sci,
+               que son los que usa el HTML.
+    ───────────────────────────────────────────── */
+    _bindEventos() {
+        document.querySelector('.calculator').addEventListener('click', e => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            this._procesarBoton(btn);
+        });
 
-function obtenerValorPantalla() {
-    // Reemplaza coma por punto para que parseFloat funcione correctamente
-    return parseFloat(pantalla.value.replace(',', '.'));
-}
+        document.addEventListener('keydown', e => this._procesarTecla(e));
+    }
 
-function formatearResultado(num) {
-    // Evita decimales infinitos (ej: 1/3 = 0.3333...)
-    if (!isFinite(num)) return 'Error';
-    const str = parseFloat(num.toFixed(10)).toString();
-    // Devuelve con coma si hay decimales (estilo europeo)
-    return str.replace('.', ',');
-}
+    /* Lee los data-attributes del botón pulsado */
+    _procesarBoton(btn) {
+        const num    = btn.dataset.num;    // '0'–'9' o '.'
+        const op     = btn.dataset.op;     // '+' '-' '*' '/'
+        const action = btn.dataset.action; // 'clear' | 'back' | 'equals'
+        const sci    = btn.dataset.sci;    // 'sin' | 'pi' | 'sqrt' …
 
-// ─── BOTONES NUMÉRICOS ───────────────────────────────────────────────────────
-botonesNum.forEach(boton => {
-    boton.addEventListener('click', () => {
-        const valor = boton.textContent.trim();
+        if (num    !== undefined) { this.ingresarDigito(num);      return; }
+        if (op     !== undefined) { this.ingresarOperador(op);     return; }
+        if (sci    !== undefined) { this.ingresarCientifico(sci);  return; }
 
-        // Evita doble coma
-        if (valor === ',' && pantalla.value.includes(',')) return;
+        if (action === 'clear')  { this.limpiar();  return; }
+        if (action === 'back')   { this.borrar();   return; }
+        if (action === 'equals') { this.calcular(); return; }
+    }
 
-        if (esperandoSegundo || operacionRealizada) {
-            actualizarPantalla(valor === ',' ? '0,' : valor);
-            esperandoSegundo = false;
-            operacionRealizada = false;
+    /* Teclado físico */
+    _procesarTecla(e) {
+        const k = e.key;
+        if (/^[0-9]$/.test(k) || k === '.')             this.ingresarDigito(k);
+        else if (['+', '-', '*', '/'].includes(k))       this.ingresarOperador(k);
+        else if (k === '^')                              this.ingresarOperador('^');
+        else if (k === 'Enter' || k === '=')             this.calcular();
+        else if (k === 'Backspace')                      this.borrar();
+        else if (k === 'Escape')                         this.limpiar();
+    }
+
+    /* ─────────────────────────────────────────────
+       ENTRADA DE DÍGITOS
+    ───────────────────────────────────────────── */
+    ingresarDigito(digito) {
+        if (this.errorActivo) this.limpiar();
+
+        if (this.nuevaEntrada) {
+            this.expresion    = digito === '.' ? '0.' : digito;
+            this.nuevaEntrada = false;
         } else {
-            const actual = pantalla.value;
-            if (actual === '0' && valor !== ',') {
-                actualizarPantalla(valor);
-            } else {
-                actualizarPantalla(actual + valor);
-            }
+            if (digito === '.' && this._ultimoNumero().includes('.')) return;
+            this.expresion += digito;
         }
-    });
-});
 
-// ─── BOTONES DE OPERADOR BÁSICO (+, -, ×, ÷) ────────────────────────────────
-function manejarOperador(operador) {
-    // Si ya hay una operación pendiente, calcula antes de continuar
-    if (operadorActual && !esperandoSegundo) {
-        calcular();
-    }
-    primerNumero = pantalla.value;
-    operadorActual = operador;
-    esperandoSegundo = true;
-    operacionRealizada = false;
-}
-
-botonSumar.addEventListener('click', () => manejarOperador('+'));
-botonRestar.addEventListener('click', () => manejarOperador('-'));
-botonMultiplicar.addEventListener('click', () => manejarOperador('*'));
-botonDividir.addEventListener('click', () => manejarOperador('/'));
-
-// ─── BOTÓN IGUAL (=) ─────────────────────────────────────────────────────────
-function calcular() {
-    if (!operadorActual || esperandoSegundo) return;
-
-    const num1 = parseFloat(primerNumero.replace(',', '.'));
-    const num2 = obtenerValorPantalla();
-    let resultado;
-
-    switch (operadorActual) {
-        case '+': resultado = num1 + num2; break;
-        case '-': resultado = num1 - num2; break;
-        case '*': resultado = num1 * num2; break;
-        case '/':
-            resultado = num2 !== 0 ? num1 / num2 : 'Error';
-            break;
-        default: return;
+        this._actualizarDisplay(this.expresion);
     }
 
-    actualizarPantalla(resultado === 'Error' ? 'Error' : formatearResultado(resultado));
-    operadorActual = '';
-    primerNumero = '';
-    esperandoSegundo = false;
-    operacionRealizada = true;
+    /* ─────────────────────────────────────────────
+       OPERADORES  + - * / ^
+    ───────────────────────────────────────────── */
+    ingresarOperador(op) {
+        if (this.errorActivo) return;
+
+        // Número negativo al inicio
+        if (this.expresion === '' && op === '-') {
+            this.expresion    = '-';
+            this.nuevaEntrada = false;
+            this._actualizarDisplay(this.expresion);
+            return;
+        }
+
+        // Si no hay nada escrito, partir del último resultado
+        if (this.expresion === '') this.expresion = this.resultado;
+
+        // Sustituir operador si el anterior no se completó
+        if (this._terminaEnOperador()) {
+            this.expresion = this.expresion.slice(0, -1) + op;
+        } else {
+            this.expresion += op;
+        }
+
+        this.nuevaEntrada = false;
+        this._actualizarDisplay(this.expresion);
+    }
+
+    /* ─────────────────────────────────────────────
+       FUNCIONES CIENTÍFICAS
+       ─────────────────────────────────────────────
+       FIX #3: El HTML usa data-sci con valores como
+               'pi', 'sqrt', 'pow', 'pct', 'ln', 'e'
+               que antes no estaban contemplados.
+    ───────────────────────────────────────────── */
+    ingresarCientifico(tipo) {
+        if (this.errorActivo) this.limpiar();
+
+        switch (tipo) {
+            // Constantes
+            case 'pi':
+                this.expresion   += this._hayNumeroAntes() ? '*π' : 'π';
+                this.nuevaEntrada = false;
+                break;
+
+            case 'e':
+                this.expresion   += this._hayNumeroAntes() ? '*ℯ' : 'ℯ';
+                this.nuevaEntrada = false;
+                break;
+
+            // Potencia: inserta el operador ^
+            case 'pow':
+                if (this.expresion === '') this.expresion = this.resultado;
+                if (!this._terminaEnOperador()) this.expresion += '^';
+                this.nuevaEntrada = false;
+                break;
+
+            // Porcentaje
+            case 'pct':
+                if (this.expresion !== '') {
+                    this.expresion   += '%';
+                    this.nuevaEntrada = false;
+                }
+                break;
+
+            // Paréntesis
+            case '(':
+                this.expresion   += '(';
+                this.nuevaEntrada = false;
+                break;
+
+            case ')':
+                this.expresion   += ')';
+                this.nuevaEntrada = false;
+                break;
+
+            // Raíz cuadrada
+            case 'sqrt':
+                this.expresion   += '√(';
+                this.nuevaEntrada = false;
+                break;
+
+            // Funciones trigonométricas y logarítmicas
+            // data-sci="sin" → sin(   data-sci="ln" → ln(   etc.
+            default:
+                this.expresion   += `${tipo}(`;
+                this.nuevaEntrada = false;
+                break;
+        }
+
+        this._actualizarDisplay(this.expresion);
+    }
+
+    /* ─────────────────────────────────────────────
+       CALCULAR  =
+       ─────────────────────────────────────────────
+       FIX #4: Añadidas las traducciones que faltaban:
+               asin, acos, atan, ln, ℯ (constante e)
+    ───────────────────────────────────────────── */
+    calcular() {
+        if (this.expresion === '' || this.errorActivo) return;
+
+        // Guardar la expresión visible antes de sobreescribirla
+        this.exprEl.textContent = this._bonito(this.expresion) + ' =';
+
+        try {
+            let expr = this.expresion
+                .replace(/π/g,     'Math.PI')
+                .replace(/ℯ/g,     'Math.E')
+                .replace(/asin\(/g,'Math.asin(')
+                .replace(/acos\(/g,'Math.acos(')
+                .replace(/atan\(/g,'Math.atan(')
+                .replace(/sin\(/g, 'Math.sin(')
+                .replace(/cos\(/g, 'Math.cos(')
+                .replace(/tan\(/g, 'Math.tan(')
+                .replace(/log\(/g, 'Math.log10(')
+                .replace(/ln\(/g,  'Math.log(')
+                .replace(/√\(/g,   'Math.sqrt(')
+                .replace(/\^/g,    '**')
+                .replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+
+            // Cerrar paréntesis sin cerrar
+            const abiertos = (expr.match(/\(/g) || []).length;
+            const cerrados = (expr.match(/\)/g) || []).length;
+            expr += ')'.repeat(Math.max(0, abiertos - cerrados));
+
+            // eslint-disable-next-line no-new-func
+            const res = Function('"use strict"; return (' + expr + ')')();
+
+            if (!isFinite(res)) throw new Error('División entre cero');
+
+            this.resultado    = this._formatearResultado(res);
+            this.expresion    = this.resultado;
+            this.nuevaEntrada = true;
+            this.errorActivo  = false;
+
+        } catch {
+            this.resultado    = 'Error';
+            this.expresion    = '';
+            this.nuevaEntrada = true;
+            this.errorActivo  = true;
+            this.exprEl.textContent = '';
+        }
+
+        this._actualizarDisplay(this.resultado);
+    }
+
+    /* ─────────────────────────────────────────────
+       LIMPIAR  C
+    ───────────────────────────────────────────── */
+    limpiar() {
+        this.expresion    = '';
+        this.resultado    = '0';
+        this.nuevaEntrada = true;
+        this.errorActivo  = false;
+        this.exprEl.textContent = '';
+        this._actualizarDisplay('0');
+    }
+
+    /* Borrar último carácter  ⌫ */
+    borrar() {
+        if (this.nuevaEntrada || this.errorActivo) { this.limpiar(); return; }
+        this.expresion = this.expresion.slice(0, -1);
+        this._actualizarDisplay(this.expresion || '0');
+    }
+
+    /* ─────────────────────────────────────────────
+       HELPERS
+    ───────────────────────────────────────────── */
+    _terminaEnOperador() {
+        return /[+\-*/^]$/.test(this.expresion);
+    }
+
+    _hayNumeroAntes() {
+        return this.expresion !== '' && !this._terminaEnOperador();
+    }
+
+    _ultimoNumero() {
+        const m = this.expresion.match(/[0-9.]+$/);
+        return m ? m[0] : '';
+    }
+
+    _formatearResultado(n) {
+        if (n === 0) return '0';
+        if (Math.abs(n) >= 1e-10 && Math.abs(n) < 1e15) {
+            return parseFloat(n.toFixed(10)).toString();
+        }
+        return n.toExponential(6);
+    }
+
+    /* Sustituye operadores internos por símbolos legibles para el display */
+    _bonito(valor) {
+        return (valor || '0')
+            .replace(/\*/g, '×')
+            .replace(/\//g, '÷')
+            .replace(/-/g,  '−');
+    }
+
+    _actualizarDisplay(valor) {
+        this.displayEl.textContent = this._bonito(valor);
+    }
 }
 
-botonIgual.addEventListener('click', calcular);
-
-// ─── BOTONES C, AC Y % ───────────────────────────────────────────────────────
-botonesGrisClaro.forEach(boton => {
-    boton.addEventListener('click', () => {
-        const texto = boton.textContent.trim();
-
-        if (texto === 'C') {
-            // Borra el último carácter
-            const actual = pantalla.value;
-            if (actual.length > 1) {
-                actualizarPantalla(actual.slice(0, -1));
-            } else {
-                actualizarPantalla('0');
-            }
-        }
-
-        if (texto === 'AC') {
-            // Resetea todo el estado
-            actualizarPantalla('0');
-            primerNumero = '';
-            operadorActual = '';
-            esperandoSegundo = false;
-            operacionRealizada = false;
-        }
-
-        if (texto === '%') {
-            const valor = obtenerValorPantalla();
-            actualizarPantalla(formatearResultado(valor / 100));
-        }
-    });
-});
-
-// ─── BOTONES OPERADORES EXTRA (x², x³, π, √) ─────────────────────────────────
-botonesOperadorExtra.forEach(boton => {
-    boton.addEventListener('click', () => {
-        const texto = boton.textContent.trim();
-        const valor = obtenerValorPantalla();
-
-        if (texto === 'x²') {
-            actualizarPantalla(formatearResultado(Math.pow(valor, 2)));
-            operacionRealizada = true;
-        }
-
-        if (texto === 'x³') {
-            actualizarPantalla(formatearResultado(Math.pow(valor, 3)));
-            operacionRealizada = true;
-        }
-
-        if (texto === 'PI') {
-            actualizarPantalla(formatearResultado(Math.PI));
-            operacionRealizada = true;
-        }
-
-        if (texto === '√') {
-            if (valor < 0) {
-                actualizarPantalla('Error');
-            } else {
-                actualizarPantalla(formatearResultado(Math.sqrt(valor)));
-            }
-            operacionRealizada = true;
-        }
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    const calc = new Calculadora();
 });

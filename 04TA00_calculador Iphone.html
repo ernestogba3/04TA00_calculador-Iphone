@@ -1,69 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora POO</title>
     <link rel="stylesheet" href="./assets/css/styleCalculadora.css">
-    <title>Calculadora</title>
 </head>
 
 <body>
-    <table>
+    <div class="calculator">
+        <div class="display-wrapper">
+            <div class="display-expr" id="expression"></div>
+            <div class="display" id="display">0</div>
+        </div>
 
-        <tr>
-            <td colspan="4"><input type="text" class="inputStyle" placeholder="0" id="texto"></td>
-        </tr>
-        <tr>
-            <td><button class="grisClaro">C</button></td>
-            <td><button class="grisClaro">AC</button></td>
-            <td><button class="grisClaro">%</button></td>
-            <td><button id="dividir" class="operador"> &#247;</button></td>
-        </tr>
+        <div class="main-layout">
 
-        <tr>
+            <!-- Scientific panel (visible in landscape) -->
+            <div class="scientific-panel" id="sci-panel">
+                <div class="sci-label">Científica</div>
+                <div class="sci-grid">
+                    <button class="sci-btn" data-sci="sin">sin</button>
+                    <button class="sci-btn" data-sci="cos">cos</button>
+                    <button class="sci-btn" data-sci="tan">tan</button>
+                    <button class="sci-btn" data-sci="asin">asin</button>
+                    <button class="sci-btn" data-sci="acos">acos</button>
+                    <button class="sci-btn" data-sci="atan">atan</button>
+                    <button class="sci-btn" data-sci="log">log</button>
+                    <button class="sci-btn" data-sci="ln">ln</button>
+                    <button class="sci-btn" data-sci="sqrt">√</button>
+                    <button class="sci-btn" data-sci="pow">xʸ</button>
+                    <button class="sci-btn" data-sci="pi">π</button>
+                    <button class="sci-btn" data-sci="e">e</button>
+                    <button class="sci-btn" data-sci="(">(</button>
+                    <button class="sci-btn" data-sci=")">)</button>
+                    <button class="sci-btn" data-sci="pct">%</button>
+                </div>
+            </div>
 
-            <td><button class="num">7</button></td>
-            <td><button class="num">8</button></td>
-            <td><button class="num">9</button></td>
-            <td><button id="multiplicar" class="operador">X</button></td>
+            <!-- Basic panel -->
+            <div class="basic-panel">
+                <div class="basic-grid">
+                    <!-- Row 1 -->
+                    <button class="btn-clear" data-action="clear">C</button>
+                    <button class="btn-back" data-action="back">⌫</button>
+                    <button class="btn-op" data-op="/">÷</button>
 
-        </tr>
+                    <!-- Row 2 -->
+                    <button data-num="7">7</button>
+                    <button data-num="8">8</button>
+                    <button data-num="9">9</button>
+                    <button class="btn-op" data-op="*">×</button>
 
-        <tr>
+                    <!-- Row 3 -->
+                    <button data-num="4">4</button>
+                    <button data-num="5">5</button>
+                    <button data-num="6">6</button>
+                    <button class="btn-op" data-op="-">−</button>
 
-            <td><button class="num">4</button></td>
-            <td><button class="num">5</button></td>
-            <td><button class="num">6</button></td>
-            <td><button id="restar" class="operador">-</button></td>
+                    <!-- Row 4 -->
+                    <button data-num="1">1</button>
+                    <button data-num="2">2</button>
+                    <button data-num="3">3</button>
+                    <button class="btn-op" data-op="+">+</button>
 
-        </tr>
+                    <!-- Row 5 -->
+                    <button data-num="0">0</button>
+                    <button data-num=".">.</button>
+                    <button class="btn-eq" data-action="equals">=</button>
+                </div>
+            </div>
 
-        <tr>
-
-            <td><button class="num">1</button></td>
-            <td><button class="num">2</button></td>
-            <td><button class="num">3</button></td>
-            <td><button id="sumar" class="operador">+</button></td>
-
-        </tr>
-        <tr>
-            <td colspan="2"><button class="num">0</button></td>
-            <td><button class="num">,</button></td>
-            <td><button id="igual" class="operador">=</button></td>
-        </tr>
-
-        <tr>
-            <td><button class="operador">x&#178;</button></td>
-            <td><button class="operador">x&#179;</button></td>
-            <td><button class="operador">PI</button></td>
-            <td><button class="operador">&#8730;</button></td>
-        </tr>
-
-    </table>
-
+        </div>
+    </div>
 
     <script src="./assets/js/main.js"></script>
 </body>
-
 </html>

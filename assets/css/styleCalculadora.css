@@ -1,91 +1,279 @@
-* {
-    margin: 0px;
-    padding: 0px;
-    box-sizing: border-box;
-
-}
-table {
-    width: 100%;
-    max-width: 350px; /* En PC no pasará de este ancho */
-    border-spacing: 12px;
-    table-layout: fixed;
-    margin: auto;
-}
-
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh; /* Ocupa al menos el alto de la pantalla */
-    background-color: black;
-    padding: 20px;
-}
-
-/*::-webkit-input-placeholder {  se utiliza para poner el placeholder en blanco por defecto es gris, es un estandar viejo
-    color: white;
-}
-    */
-    ::placeholder{ /*Estandar moderno sirve para casi todos los navegadores modernos.*/
-        color: white;
+ *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
     }
-
-.grisClaro {
-    background-color: #a6a6a6;
-    color: black;
-    font-weight: 700;
-}
-
-.inputStyle {
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 60px;
-    padding: 20px 10px;
-    background: black;
-    color: white;
-    border: none;
-    text-align: right;
-}
-
-button {
-    width: 100%;
-    aspect-ratio: 1 / 1; /* Esto define la altura de TODAS las filas */
-    border-radius: 50%;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-button:active{
-    opacity: 0.7;
-}
-
-td[colspan="2"] button {
-    aspect-ratio: 2; /* Permite que sea más ancho que alto */
-    height: 100%; 
-    border-radius: 100px; /* Radio grande para que parezca cápsula */
-    justify-content: space-around;
-    padding-left: 25px;
-}
-
-td{
-    width: 25%;
-    padding: 0;
-}
-
-
-
-.operador {
-    background-color: #ff9500;
-    color: white;
-}
-
-
-
-.num {
-    background-color: #333;
-    color: white;
-    font-weight: 300;
-}
+ 
+    :root {
+      --bg:          #111318;
+      --calc-bg:     #1a1d24;
+      --display-bg:  #0b0f0b;
+      --display-txt: #39ff83;
+      --display-dim: #1a4a2a;
+      --btn-bg:      #252830;
+      --btn-hover:   #2e3340;
+      --btn-active:  #1e2128;
+      --btn-op:      #1e2d3d;
+      --btn-op-h:    #263d52;
+      --btn-sci:     #1e1a2d;
+      --btn-sci-h:   #2a2440;
+      --btn-clear:   #3d1a1a;
+      --btn-clear-h: #521e1e;
+      --btn-eq:      #1a3d2a;
+      --btn-eq-h:    #1f5236;
+      --accent:      #39ff83;
+      --accent2:     #4d9fff;
+      --accent3:     #ff6b6b;
+      --border:      #2e3340;
+      --text:        #c8cdd8;
+      --text-dim:    #5a6070;
+      --shadow:      0 8px 32px rgba(0,0,0,0.6);
+      --glow:        0 0 12px rgba(57,255,131,0.25);
+    }
+ 
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', monospace;
+      background-image:
+        radial-gradient(ellipse 80% 80% at 50% -20%, rgba(57,255,131,0.06) 0%, transparent 70%);
+    }
+ 
+    /* ── CALCULATOR SHELL ── */
+    .calculator {
+      background: var(--calc-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+      padding: 20px;
+      width: 300px;
+      transition: width 0.35s cubic-bezier(.4,0,.2,1), border-radius 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+ 
+    .calculator::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+ 
+    /* ── DISPLAY ── */
+    .display-wrapper {
+      background: var(--display-bg);
+      border-radius: 8px;
+      border: 1px solid #1a2a1a;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), var(--glow);
+      position: relative;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+ 
+    .display-expr {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75em;
+      color: var(--display-dim);
+      min-height: 1.2em;
+      text-align: right;
+      letter-spacing: 0.05em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+ 
+    .display {
+      font-family: 'VT323', monospace;
+      font-size: 2.8em;
+      color: var(--display-txt);
+      text-align: right;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px rgba(57,255,131,0.5), 0 0 20px rgba(57,255,131,0.2);
+      line-height: 1;
+      word-break: break-all;
+      transition: font-size 0.1s ease;
+    }
+ 
+    .display.small { font-size: 1.8em; }
+    .display.xsmall { font-size: 1.3em; }
+ 
+    /* Scan-line effect */
+    .display-wrapper::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.08) 3px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      border-radius: 8px;
+    }
+ 
+    /* ── LAYOUT ── */
+    .main-layout {
+      display: flex;
+      gap: 12px;
+    }
+ 
+    /* Scientific panel — hidden in portrait */
+    .scientific-panel {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+ 
+    .sci-label {
+      font-size: 0.55em;
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+ 
+    .sci-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+ 
+    /* Basic buttons panel */
+    .basic-panel {
+      flex: 1;
+    }
+ 
+    .basic-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+ 
+    /* ── BUTTONS ── */
+    button {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1em;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text);
+      background: var(--btn-bg);
+      padding: 0;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+ 
+    button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+ 
+    button:hover  { background: var(--btn-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    button:active { background: var(--btn-active); transform: translateY(0); box-shadow: none; }
+ 
+    /* Operator buttons */
+    .btn-op {
+      background: var(--btn-op);
+      color: var(--accent2);
+      border-color: #243345;
+      font-size: 1.2em;
+    }
+    .btn-op:hover { background: var(--btn-op-h); }
+ 
+    /* Scientific buttons */
+    .sci-btn {
+      background: var(--btn-sci);
+      color: #b094f0;
+      border-color: #2a2240;
+      font-size: 0.78em;
+      height: 44px;
+      letter-spacing: 0.03em;
+    }
+    .sci-btn:hover { background: var(--btn-sci-h); }
+ 
+    /* Clear button */
+    .btn-clear {
+      background: var(--btn-clear);
+      color: var(--accent3);
+      border-color: #4a2020;
+      grid-column: span 2;
+    }
+    .btn-clear:hover { background: var(--btn-clear-h); }
+ 
+    /* Backspace button */
+    .btn-back {
+      background: #2a1e10;
+      color: #ffa040;
+      border-color: #3d2a15;
+    }
+    .btn-back:hover { background: #3d2a10; }
+ 
+    /* Equals button */
+    .btn-eq {
+      background: var(--btn-eq);
+      color: var(--accent);
+      border-color: #1e4a2a;
+      grid-column: span 2;
+      box-shadow: 0 0 8px rgba(57,255,131,0.1);
+    }
+    .btn-eq:hover { background: var(--btn-eq-h); box-shadow: 0 0 14px rgba(57,255,131,0.25); }
+ 
+    /* Flash animation on press */
+    @keyframes flash {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    .flash { animation: flash 0.15s ease; }
+ 
+    /* ── LANDSCAPE MEDIA QUERY ── */
+    @media (orientation: landscape) {
+      .calculator {
+        width: 580px;
+        border-radius: 14px;
+      }
+ 
+      .scientific-panel {
+        display: flex;
+        width: 180px;
+      }
+ 
+      button { height: 46px; }
+      .sci-btn { height: 40px; font-size: 0.72em; }
+ 
+      .display { font-size: 2.4em; }
+    }
+ 
+    /* Very small screens in landscape */
+    @media (orientation: landscape) and (max-height: 420px) {
+      .calculator { padding: 12px; }
+      button { height: 38px; font-size: 0.85em; }
+      .sci-btn { height: 34px; }
+      .display { font-size: 2em; }
+      .display-wrapper { min-height: 60px; padding: 8px 12px; margin-bottom: 10px; }
+      .basic-grid { gap: 5px; }
+      .sci-grid { gap: 5px; }
+      .main-layout { gap: 8px; }
+    }
