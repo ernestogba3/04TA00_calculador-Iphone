@@ -280,4 +280,40 @@ class Calculadora {
 
 document.addEventListener('DOMContentLoaded', () => {
     const calc = new Calculadora();
+
+    /* ─────────────────────────────────────────────
+       DETECCIÓN DE ORIENTACIÓN
+       Usamos screen.orientation (móviles) con
+       fallback a window.orientation (iOS antiguos).
+       En escritorio nunca se activa el modo paisaje
+       aunque la ventana sea ancha.
+    ───────────────────────────────────────────── */
+    function esPaisaje() {
+        // API moderna — funciona en Android y iOS reciente
+        if (screen.orientation && screen.orientation.type) {
+            return screen.orientation.type.startsWith('landscape');
+        }
+        // Fallback para iOS Safari antiguo
+        if (typeof window.orientation !== 'undefined') {
+            return Math.abs(window.orientation) === 90;
+        }
+        // En escritorio no activamos el científico automáticamente
+        return false;
+    }
+
+    function actualizarOrientacion() {
+        const paisaje = esPaisaje();
+        document.body.classList.toggle('landscape', paisaje);
+        // Clase extra para pantallas pequeñas en horizontal (< 440px alto)
+        document.body.classList.toggle('small-screen', paisaje && window.innerHeight < 440);
+    }
+
+    // Escuchar cambio de orientación
+    if (screen.orientation) {
+        screen.orientation.addEventListener('change', actualizarOrientacion);
+    }
+    window.addEventListener('orientationchange', actualizarOrientacion);
+
+    // Comprobar al cargar por si el dispositivo ya está girado
+    actualizarOrientacion();
 });
